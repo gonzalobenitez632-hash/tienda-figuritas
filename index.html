@@ -97,7 +97,8 @@
 
     async function loadProducts(){
       const res = await fetch("/data/products.json", {cache:"no-store"});
-      PRODUCTS = await res.json();
+      const json = await res.json();
+PRODUCTS = json.items || [];
       render();
     }
 
