@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Figuritas & Álbumes | Compra rápida por WhatsApp</title>
+  <meta name="description" content="Venta de figuritas originales Panini y álbumes coleccionables. Lotes, sueltas por lista y envíos." />
+  <style>
+    :root { --bg:#0b0f14; --card:#121a23; --txt:#e9f0f7; --muted:#9fb0c0; --acc:#34d399; --line:#243243; }
+    *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--txt)}
+    .wrap{max-width:1100px;margin:0 auto;padding:24px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:18px}
+    .brand{display:flex;flex-direction:column}
+    .brand b{font-size:18px} .brand span{color:var(--muted);font-size:13px}
+    .hero{border:1px solid var(--line);background:linear-gradient(180deg,#0f1720, #0b0f14);border-radius:18px;padding:22px;display:grid;gap:10px}
+    .hero h1{margin:0;font-size:28px} .hero p{margin:0;color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input,select,button{border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--txt);padding:10px 12px}
+    button{cursor:pointer} button.primary{background:var(--acc);color:#062313;border-color:transparent;font-weight:700}
+    .grid{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    @media (max-width:900px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:600px){.grid{grid-template-columns:1fr}}
+    .card{border:1px solid var(--line);background:var(--card);border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+    .img{height:160px;background:#0a121b;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+    .card .p{padding:14px;display:flex;flex-direction:column;gap:8px}
+    .tag{display:inline-block;font-size:12px;color:#072115;background:var(--acc);padding:3px 8px;border-radius:999px;font-weight:700}
+    .muted{color:var(--muted);font-size:13px}
+    .price{font-size:18px;font-weight:800}
+    .two{display:flex;justify-content:space-between;gap:10px;align-items:center}
+    .cart{position:fixed;right:16px;bottom:16px;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px;min-width:280px;max-width:340px}
+    .cart h3{margin:0 0 8px 0;font-size:14px}
+    .cart ul{margin:0;padding-left:18px;max-height:140px;overflow:auto}
+    .cart .actions{display:flex;gap:8px;margin-top:10px}
+    footer{margin-top:26px;color:var(--muted);font-size:13px}
+    a{color:var(--acc);text-decoration:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <b>Figuritas & Álbumes</b>
+        <span>Originales • Lotes • Sueltas por lista • Envíos</span>
+      </div>
+      <div class="row">
+        <a class="muted" href="/admin/">Admin</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <h1>Completá tu álbum hoy (sin vueltas)</h1>
+      <p>Elegí lotes, álbumes o pedí figuritas sueltas por lista. Armamos tu pedido y lo cerrás por WhatsApp.</p>
+      <div class="row">
+        <input id="q" placeholder="Buscar (ej: Copa América 2024, lote 100…)" style="min-width:260px" />
+        <select id="cat">
+          <option value="">Todas las categorías</option>
+          <option value="albumes">Álbumes</option>
+          <option value="lotes">Lotes</option>
+          <option value="sueltas">Figuritas sueltas</option>
+        </select>
+        <button class="primary" onclick="scrollToShop()">Ver catálogo</button>
+      </div>
+      <div class="muted">Tip: si querés venta directa, poné tu WhatsApp real abajo.</div>
+    </section>
+
+    <div id="shop" class="grid"></div>
+
+    <footer>
+      <div>Atención por WhatsApp • Productos originales • Envíos a todo el país</div>
+      <div>© <span id="y"></span> • Hecho para vender, no para decorar 😄</div>
+    </footer>
+  </div>
+
+  <aside class="cart" id="cartBox" aria-live="polite">
+    <h3>Carrito</h3>
+    <ul id="cart"></ul>
+    <div class="two">
+      <span class="muted">Items: <b id="count">0</b></span>
+      <span class="muted">Total: <b id="total">$0</b></span>
+    </div>
+    <div class="actions">
+      <button onclick="clearCart()">Vaciar</button>
+      <button class="primary" onclick="checkout()">Comprar por WhatsApp</button>
+    </div>
+  </aside>
+
+  <script>
+    const WHATSAPP_NUMBER = "5491128486218"; // <-- CAMBIÁ ACÁ (formato internacional, sin +)
+    const CURRENCY = "ARS";
+
+    let PRODUCTS = [];
+    let CART = [];
+
+    const fmt = (n)=> new Intl.NumberFormat("es-AR",{style:"currency",currency:CURRENCY,maximumFractionDigits:0}).format(n);
+
+    function scrollToShop(){ document.getElementById("shop").scrollIntoView({behavior:"smooth"}); }
+
+    async function loadProducts(){
+      const res = await fetch("/data/products.json", {cache:"no-store"});
+      PRODUCTS = await res.json();
+      render();
+    }
+
+    function render(){
+      const q = (document.getElementById("q").value||"").toLowerCase().trim();
+      const cat = document.getElementById("cat").value;
+
+      const list = PRODUCTS.filter(p=>{
+        const hit = (p.name+" "+(p.desc||"")+" "+(p.tags||[]).join(" ")).toLowerCase().includes(q);
+        const okCat = !cat || p.category===cat;
+        return hit && okCat;
+      });
+
+      const el = document.getElementById("shop");
+      el.innerHTML = list.map(p=>`
+        <div class="card">
+          <div class="img">${p.image ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover">` : "Imagen"}</div>
+          <div class="p">
+            <div class="two">
+              <b>${p.name}</b>
+              ${p.badge ? `<span class="tag">${p.badge}</span>` : ""}
+            </div>
+            <div class="muted">${p.desc||""}</div>
+            <div class="two">
+              <span class="price">${fmt(p.price)}</span>
+              <button class="primary" onclick='addToCart("${p.id}")'>Agregar</button>
+            </div>
+            <div class="muted">Categoría: ${p.category}</div>
+          </div>
+        </div>
+      `).join("");
+
+      renderCart();
+    }
+
+    function addToCart(id){
+      const p = PRODUCTS.find(x=>x.id===id);
+      if(!p) return;
+      const item = CART.find(x=>x.id===id);
+      if(item) item.qty += 1;
+      else CART.push({id, name:p.name, price:p.price, qty:1});
+      renderCart();
+    }
+
+    function clearCart(){ CART = []; renderCart(); }
+
+    function renderCart(){
+      const ul = document.getElementById("cart");
+      ul.innerHTML = CART.length ? CART.map(i=>`<li>${i.qty} × ${i.name} (${fmt(i.price*i.qty)})</li>`).join("") : "<li class='muted'>Vacío</li>";
+      const count = CART.reduce((a,b)=>a+b.qty,0);
+      const total = CART.reduce((a,b)=>a+(b.price*b.qty),0);
+      document.getElementById("count").textContent = count;
+      document.getElementById("total").textContent = fmt(total);
+    }
+
+    function checkout(){
+      if(!CART.length){ alert("El carrito está vacío."); return; }
+      const lines = CART.map(i=>`${i.qty}x ${i.name} - ${fmt(i.price*i.qty)}`).join("\n");
+      const total = CART.reduce((a,b)=>a+(b.price*b.qty),0);
+      const msg = `Hola! Quiero comprar:\n\n${lines}\n\nTotal aprox: ${fmt(total)}\n\nForma de entrega: (envío / retiro)\nPago: (Mercado Pago / efectivo / otro)\n`;
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank");
+    }
+
+    document.getElementById("q").addEventListener("input", render);
+    document.getElementById("cat").addEventListener("change", render);
+    document.getElementById("y").textContent = new Date().getFullYear();
+
+    loadProducts();
+  </script>
+</body>
+</html>
