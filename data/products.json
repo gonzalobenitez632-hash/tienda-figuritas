@@ -1,0 +1,32 @@
+[
+  {
+    "id": "lote-50",
+    "name": "Lote 50 figuritas originales Panini",
+    "desc": "Ideal para arrancar o revender. Surtido variado.",
+    "price": 15000,
+    "category": "lotes",
+    "badge": "Más vendido",
+    "tags": ["panini", "figuritas", "lote"],
+    "image": ""
+  },
+  {
+    "id": "album-copa-america-2024",
+    "name": "Álbum Copa América 2024 (Panini)",
+    "desc": "Álbum original. Consultá stock.",
+    "price": 0,
+    "category": "albumes",
+    "badge": "Stock limitado",
+    "tags": ["album", "copa america 2024", "panini"],
+    "image": ""
+  },
+  {
+    "id": "sueltas-por-lista",
+    "name": "Figuritas sueltas por lista",
+    "desc": "Pasame tu lista y te armamos el pedido.",
+    "price": 0,
+    "category": "sueltas",
+    "badge": "A pedido",
+    "tags": ["sueltas", "lista", "completar album"],
+    "image": ""
+  }
+]
