@@ -96,7 +96,7 @@
     function scrollToShop(){ document.getElementById("shop").scrollIntoView({behavior:"smooth"}); }
 
     async function loadProducts(){
-      const res = await fetch("/data/products.json", {cache:"no-store"});
+      const res = await fetch("{ "items": [ ...tus productos... ] }", {cache:"no-store"});
       const json = await res.json();
 PRODUCTS = json.items || [];
       render();
